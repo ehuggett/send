@@ -1,5 +1,5 @@
 import EventEmitter from 'events';
-import { arrayToHex } from './utils';
+import { arrayToHex, str2ab } from './utils';
 
 export default class FileSender extends EventEmitter {
   constructor(file) {
@@ -68,17 +68,31 @@ export default class FileSender extends EventEmitter {
             secretKey,
             plaintext
           ),
+          window.crypto.subtle.encrypt(
+            {
+              name: 'AES-GCM',
+              // TODO FIXME CRITICAL:: iv must _never_ be reused, change immediately after this 'works'
+              iv: this.iv,
+              tagLength: 128
+            },
+            secretKey,
+            str2ab(self.file.name)
+          ),
           window.crypto.subtle.exportKey('jwk', secretKey)
         ]);
       })
-      .then(([encrypted, keydata]) => {
+      .then(([encrypted, encfilename, keydata]) => {
         return new Promise((resolve, reject) => {
           const file = this.file;
           const fileId = arrayToHex(this.iv);
           const dataView = new DataView(encrypted);
           const blob = new Blob([dataView], { type: file.type });
           const fd = new FormData();
-          fd.append('data', blob, file.name);
+
+          const filename_post_raw = new Uint8Array(encfilename);
+          const filename_post = arrayToHex(filename_post_raw);
+
+          fd.append('data', blob, filename_post);
 
           const xhr = self.uploadXHR;
 
@@ -108,7 +122,7 @@ export default class FileSender extends EventEmitter {
             'X-File-Metadata',
             JSON.stringify({
               id: fileId,
-              filename: encodeURIComponent(file.name)
+              filename: filename_post
             })
           );
           xhr.send(fd);

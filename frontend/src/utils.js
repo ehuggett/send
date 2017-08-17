@@ -1,3 +1,18 @@
+// taken from https://github.com/dfcreative/string-to-arraybuffer/blob/b52f48da7731a3515384d013143e9bfe6d4f8828/index.js#L23
+function str2ab(str) {
+  //use of str.length with multibyte characters will cause this to fail?
+  const array = new Uint8Array(str.length);
+  for (let i = 0; i < str.length; i++) {
+    array[i] = str.charCodeAt(i);
+  }
+  return array.buffer;
+}
+
+import { Buffer } from 'buffer/';
+function ab2str(ab) {
+  return Buffer.from(ab).toString('utf8');
+}
+
 function arrayToHex(iv) {
   let hexStr = '';
   // eslint-disable-next-line prefer-const
@@ -143,6 +158,8 @@ export {
   copyToClipboard,
   arrayToHex,
   hexToArray,
+  str2ab,
+  ab2str,
   notify,
   gcmCompliant,
   isFile,

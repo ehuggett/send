@@ -92,6 +92,7 @@ async function download() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+  //TODO decrypt and sanitize filename for display/use
   const file = document.getElementById('dl-file');
   const filename = file.getAttribute('data-filename');
   const b = Number(file.getAttribute('data-size'));

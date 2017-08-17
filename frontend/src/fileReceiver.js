@@ -1,5 +1,5 @@
 import EventEmitter from 'events';
-import { hexToArray } from './utils';
+import { hexToArray, ab2str } from './utils';
 
 export default class FileReceiver extends EventEmitter {
   constructor(url, k) {
@@ -72,9 +72,21 @@ export default class FileReceiver extends EventEmitter {
       key,
       file.data
     );
+    const decfilename = await window.crypto.subtle.decrypt(
+      {
+        name: 'AES-GCM',
+        // TODO FIXME CRITICAL - iv reuse
+        iv: hexToArray(file.iv),
+        tagLength: 128
+      },
+      key,
+      hexToArray(file.name)
+    );
+
     return {
       plaintext,
-      name: decodeURIComponent(file.name),
+      // TODO - check if its safe to return untrusted input here. probably not
+      name: ab2str(decfilename),
       type: file.type
     };
   }
