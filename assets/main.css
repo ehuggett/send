@@ -647,6 +647,10 @@ tbody {
   align-self: left;
 }
 
+.selectPassword > .userPassword {
+  font-weight: bold;
+}
+
 .setPassword {
   align-self: left;
   display: flex;

@@ -11,7 +11,7 @@ module.exports = function(state, emit) {
   }
   const passwordComplete = html`
   <div class="selectPassword">
-    Password: ${file.password}
+    Password: <span class='userPassword'>${file.password}</span>
   </div>`;
   const passwordSection = file.password
     ? passwordComplete
