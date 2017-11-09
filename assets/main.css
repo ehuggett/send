@@ -560,6 +560,13 @@ tbody {
   width: 100%;
 }
 
+#copy.wait-password #link {
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
 #copy.wait-password #link,
 #copy.wait-password #copy-btn {
   opacity: 0.5;
