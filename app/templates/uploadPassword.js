@@ -5,7 +5,9 @@ module.exports = function(state, emit) {
   const div = html`
   <div class="selectPassword">
     <div id="addPasswordWrapper">
-      <input id="addPassword" type="checkbox" autocomplete="off" onchange=${togglePasswordInput}/>
+      <input id="addPassword" type="checkbox" autocomplete="off" onchange=${
+        togglePasswordInput
+      }/>
       <label for="addPassword">
         ${state.translate('requirePasswordCheckbox')}</label>
     </div>
@@ -37,6 +39,7 @@ module.exports = function(state, emit) {
 
   function togglePasswordInput(e) {
     const unlockInput = document.getElementById('unlock-input');
+    const linkInput = document.getElementById('link');
     const boxChecked = e.target.checked;
     document
       .querySelector('.setPassword')
@@ -47,8 +50,10 @@ module.exports = function(state, emit) {
     document.getElementById('copy-btn').disabled = boxChecked;
     if (boxChecked) {
       unlockInput.focus();
+      linkInput.setAttribute('disabled', 'disabled');
     } else {
       unlockInput.value = '';
+      linkInput.removeAttribute('disabled');
     }
     inputChanged();
   }
