@@ -3,6 +3,7 @@ import app from './routes';
 import locale from '../common/locales';
 import fileManager from './fileManager';
 import dragManager from './dragManager';
+import pasteManager from './pasteManager';
 import { canHasSend } from './utils';
 import assets from '../common/assets';
 import storage from './storage';
@@ -46,6 +47,7 @@ app.use((state, emitter) => {
 app.use(metrics);
 app.use(fileManager);
 app.use(dragManager);
+app.use(pasteManager);
 app.use(experiments);
 
 app.mount('body');
