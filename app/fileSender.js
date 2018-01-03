@@ -264,56 +264,65 @@ export default class FileSender extends Nanobus {
 
   static async setPassword(existingPassword, password, file) {
     const encoder = new TextEncoder();
-    const secretKey = await window.crypto.subtle.importKey(
-      'raw',
-      b64ToArray(file.secretKey),
-      'HKDF',
-      false,
-      ['deriveKey']
-    );
-    const authKey = await window.crypto.subtle.deriveKey(
-      {
-        name: 'HKDF',
-        salt: new Uint8Array(),
-        info: encoder.encode('authentication'),
-        hash: 'SHA-256'
-      },
-      secretKey,
-      {
-        name: 'HMAC',
-        hash: 'SHA-256'
-      },
-      true,
-      ['sign']
-    );
+
+    let authKey;
+    if (existingPassword) {
+      // create the authKey using the previous password
+      const oldPwdkey = await window.crypto.subtle.importKey(
+        'raw',
+        encoder.encode(existingPassword),
+        { name: 'PBKDF2' },
+        false,
+        ['deriveKey']
+      );
+      authKey = await window.crypto.subtle.deriveKey(
+        {
+          name: 'PBKDF2',
+          salt: encoder.encode(file.url),
+          iterations: 100,
+          hash: 'SHA-256'
+        },
+        oldPwdkey,
+        {
+          name: 'HMAC',
+          hash: 'SHA-256'
+        },
+        true,
+        ['sign']
+      );
+    } else {
+      // the file does not yet have a password
+      // create the authKey using the secretKey
+      const secretKey = await window.crypto.subtle.importKey(
+        'raw',
+        b64ToArray(file.secretKey),
+        'HKDF',
+        false,
+        ['deriveKey']
+      );
+      authKey = await window.crypto.subtle.deriveKey(
+        {
+          name: 'HKDF',
+          salt: new Uint8Array(),
+          info: encoder.encode('authentication'),
+          hash: 'SHA-256'
+        },
+        secretKey,
+        {
+          name: 'HMAC',
+          hash: 'SHA-256'
+        },
+        true,
+        ['sign']
+      );
+    }
+
     const pwdKey = await window.crypto.subtle.importKey(
       'raw',
       encoder.encode(password),
       { name: 'PBKDF2' },
       false,
       ['deriveKey']
-    );
-    const oldPwdkey = await window.crypto.subtle.importKey(
-      'raw',
-      encoder.encode(existingPassword),
-      { name: 'PBKDF2' },
-      false,
-      ['deriveKey']
-    );
-    const oldAuthKey = await window.crypto.subtle.deriveKey(
-      {
-        name: 'PBKDF2',
-        salt: encoder.encode(file.url),
-        iterations: 100,
-        hash: 'SHA-256'
-      },
-      oldPwdkey,
-      {
-        name: 'HMAC',
-        hash: 'SHA-256'
-      },
-      true,
-      ['sign']
     );
     const newAuthKey = await window.crypto.subtle.deriveKey(
       {
@@ -332,18 +341,10 @@ export default class FileSender extends Nanobus {
     );
     const rawAuth = await window.crypto.subtle.exportKey('raw', newAuthKey);
     try {
-      if (existingPassword) {
-        await sendPassword(file, oldAuthKey, rawAuth);
-      } else {
-        await sendPassword(file, authKey, rawAuth);
-      }
+      await sendPassword(file, authKey, rawAuth);
     } catch (e) {
       if (e.message === '401' && file.nonce !== e.nonce) {
-        if (existingPassword) {
-          await sendPassword(file, oldAuthKey, rawAuth);
-        } else {
-          await sendPassword(file, authKey, rawAuth);
-        }
+        await sendPassword(file, authKey, rawAuth);
       } else {
         throw e;
       }
