@@ -262,7 +262,7 @@ export default class FileSender extends Nanobus {
     return this.uploadFile(encrypted, metadata, new Uint8Array(rawAuth));
   }
 
-  static async setPassword(password, file) {
+  static async setPassword(existingPassword, password, file) {
     const encoder = new TextEncoder();
     const secretKey = await window.crypto.subtle.importKey(
       'raw',
@@ -293,6 +293,28 @@ export default class FileSender extends Nanobus {
       false,
       ['deriveKey']
     );
+    const oldPwdkey = await window.crypto.subtle.importKey(
+      'raw',
+      encoder.encode(existingPassword),
+      { name: 'PBKDF2' },
+      false,
+      ['deriveKey']
+    );
+    const oldAuthKey = await window.crypto.subtle.deriveKey(
+      {
+        name: 'PBKDF2',
+        salt: encoder.encode(file.url),
+        iterations: 100,
+        hash: 'SHA-256'
+      },
+      oldPwdkey,
+      {
+        name: 'HMAC',
+        hash: 'SHA-256'
+      },
+      true,
+      ['sign']
+    );
     const newAuthKey = await window.crypto.subtle.deriveKey(
       {
         name: 'PBKDF2',
@@ -310,10 +332,18 @@ export default class FileSender extends Nanobus {
     );
     const rawAuth = await window.crypto.subtle.exportKey('raw', newAuthKey);
     try {
-      await sendPassword(file, authKey, rawAuth);
+      if (existingPassword) {
+        await sendPassword(file, oldAuthKey, rawAuth);
+      } else {
+        await sendPassword(file, authKey, rawAuth);
+      }
     } catch (e) {
       if (e.message === '401' && file.nonce !== e.nonce) {
-        await sendPassword(file, authKey, rawAuth);
+        if (existingPassword) {
+          await sendPassword(file, oldAuthKey, rawAuth);
+        } else {
+          await sendPassword(file, authKey, rawAuth);
+        }
       } else {
         throw e;
       }
