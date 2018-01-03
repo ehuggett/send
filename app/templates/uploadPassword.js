@@ -5,9 +5,7 @@ module.exports = function(state, emit) {
   const div = html`
   <div class="selectPassword">
     <div id="addPasswordWrapper">
-      <input id="addPassword" type="checkbox" autocomplete="off" onchange=${
-        togglePasswordInput
-      }/>
+      <input id="addPassword" type="checkbox" autocomplete="off" onchange=${togglePasswordInput}/>
       <label for="addPassword">
         ${state.translate('requirePasswordCheckbox')}</label>
     </div>
@@ -53,11 +51,12 @@ module.exports = function(state, emit) {
 
   function setPassword(event) {
     event.preventDefault();
+    const existingPassword = null;
     const password = document.getElementById('unlock-input').value;
     if (password.length > 0) {
       document.getElementById('copy').classList.remove('wait-password');
       document.getElementById('copy-btn').disabled = false;
-      emit('password', { password, file });
+      emit('password', { existingPassword, password, file });
     }
   }
 
