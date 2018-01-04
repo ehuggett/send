@@ -18,12 +18,10 @@ async function sendPassword(file, authKey, rawAuth) {
     const xhr = new XMLHttpRequest();
     xhr.onreadystatechange = () => {
       if (xhr.readyState === XMLHttpRequest.DONE) {
+        const nonce = xhr.getResponseHeader('WWW-Authenticate').split(' ')[1];
+        file.nonce = nonce;
         if (xhr.status === 200) {
           return resolve(xhr.response);
-        }
-        if (xhr.status === 401) {
-          const nonce = xhr.getResponseHeader('WWW-Authenticate').split(' ')[1];
-          file.nonce = nonce;
         }
         reject(new Error(xhr.status));
       }
